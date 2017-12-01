@@ -36,6 +36,7 @@ gameExit = False
 
 ##### calculations #####
 
+#obtained from 
 def rot_center(image, angle):
     """rotate an image while keeping its center and size"""
     orig_rect = image.get_rect()
