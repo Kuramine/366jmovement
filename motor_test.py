@@ -101,7 +101,8 @@ def left(x):
 	print("left")
 	change_angle(turn_angle)
 	global car_surface
-	car_surface = rot_center(car_surface, turn_angle)
+	car_surface = rot_center(pygame.image.load('car_body.jpg'), car_angle) 
+	#redefining a new surface every time as a new image removes artifacting when rotating
 	time.sleep(x)
 	calculate_position(fake_sensor(),'left')
 
@@ -109,7 +110,7 @@ def right(x):
 	print("right")
 	change_angle(-turn_angle)
 	global car_surface
-	car_surface = rot_center(car_surface, -1*turn_angle)
+	car_surface = rot_center(pygame.image.load('car_body.jpg'), car_angle)
 	time.sleep(x)
 	calculate_position(fake_sensor(),'right')
 
@@ -140,7 +141,7 @@ while not gameExit:
 
 	#drawing the dots
 	for item in sensor_list:
-		gameDisplay.fill(white, rect=[item[0],item[1],3,3]) #Dots are size 3x3
+		gameDisplay.fill(white, rect=[item[0],item[1],5,5]) #Dots are size 5x5
 
 	pygame.display.update()
 
