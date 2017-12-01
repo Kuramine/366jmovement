@@ -1,0 +1,6 @@
+#Launch the thermal camera
+>> cd ../adafruit blah blah
+>>
+
+#launch the motor controller:
+>> sudo python motor_control.py
