@@ -48,7 +48,7 @@ def rot_center(image, angle):
     rot_image = rot_image.subsurface(rot_rect).copy()
     return rot_image
 
-#car_surface = rot_center(car_surface, car_angle) #initial rotation on first load of car sprite
+car_surface = rot_center(car_surface, car_angle) #initial rotation on first load of car sprite
 
 def calculate_position(distance, direction): # calculate sensed object position relative to car, 2 scenarios with 4 quadrants each = 8 conditions
 	if direction == "forward":
