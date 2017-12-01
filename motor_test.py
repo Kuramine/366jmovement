@@ -1,4 +1,6 @@
-from msvcrt import getch
+# Author: Yujie Hou
+# Last Edit: 11/30/2017
+
 from calculations import calculate_xy_position, calculate_xy_shift
 import sys, time, math
 import random
@@ -36,7 +38,7 @@ gameExit = False
 
 ##### calculations #####
 
-#obtained from 
+# rot_center was obtained from official github wiki
 def rot_center(image, angle):
     """rotate an image while keeping its center and size"""
     orig_rect = image.get_rect()

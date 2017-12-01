@@ -1,3 +1,6 @@
+# Author: Yujie Hou
+# Last Edit: 11/30/2017
+
 import sys, time, math
 
 def calculate_xy_position(distance, angle):
