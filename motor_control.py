@@ -49,8 +49,8 @@ mode=GPIO.getmode()
 GPIO.cleanup()
 
 # assigning; GPIO pin setup
-Forward = 26 # motor 1 forward
-Backward = 20 # motor 1 backward
+Forward = 20 # motor 1 forward
+Backward = 26 # motor 1 backward
 Forward2 = 19 # motor 2 forward
 Backward2 = 16 # motor 2 backward
 sleeptime=1
@@ -65,6 +65,10 @@ GPIO.setup(Backward2, GPIO.OUT)
 
 GPIO_TRIGGER = 23
 GPIO_ECHO = 24
+
+#set GPIO direction (IN / OUT)
+GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
+GPIO.setup(GPIO_ECHO, GPIO.IN)
 
 ##### CALCULATIONS OF POSITION #####
 
@@ -154,7 +158,7 @@ def forward(x):
     time.sleep(x) # wait x amount of time
     GPIO.output(Forward, GPIO.LOW) # motor 1 forward deactivate
     GPIO.output(Forward2, GPIO.LOW) # motor 2 forward deactivate
-    calculate_position(fake_sensor(),'forward')
+    calculate_position(distance(),'forward')
 
 def reverse(x):
     GPIO.output(Backward, GPIO.HIGH)
@@ -163,7 +167,7 @@ def reverse(x):
     time.sleep(x)
     GPIO.output(Backward, GPIO.LOW)
     GPIO.output(Backward2, GPIO.LOW)
-    calculate_position(fake_sensor(),'backward')
+    calculate_position(distance(),'backward')
 
 def left(x):
     GPIO.output(Backward, GPIO.HIGH) # left motor backward
@@ -176,7 +180,7 @@ def left(x):
     global car_surface
     car_surface = rot_center(pygame.image.load('car_body.jpg'), car_angle) 
     # redefining a new surface every time as a new image removes artifacting when rotating
-    calculate_position(fake_sensor(),'left')
+    calculate_position(distance(),'left')
 
 def right(x):
     GPIO.output(Forward, GPIO.HIGH)
@@ -188,7 +192,7 @@ def right(x):
     change_angle(-turn_angle)
     global car_surface
     car_surface = rot_center(pygame.image.load('car_body.jpg'), car_angle)
-    calculate_position(fake_sensor(),'right')
+    calculate_position(distance(),'right')
 
 while not gameExit:
     for event in pygame.event.get():
@@ -202,11 +206,11 @@ while not gameExit:
     if pressed[pygame.K_w]:
        forward(.5)
     if pressed[pygame.K_a]:
-       left(.5)
+       left(.1)
     if pressed[pygame.K_s]:
        reverse(.5)
     if pressed[pygame.K_d]:
-       right(.5)
+       right(.1)
 
     gameDisplay.blit(start_surface,[history_list[0][0]-10,history_list[0][1]-10,20,20]) # displaying start point 
     gameDisplay.blit(car_surface,[screen_width/2-car_width/2,screen_height/2-car_height/2,car_width,car_height]) # displaying car
@@ -214,9 +218,12 @@ while not gameExit:
     # drawing the dots
     
     for item in sensor_list:
-        gameDisplay.fill(white, rect=[item[0],item[1],5,5]) # dots are size 5x5
+        gameDisplay.fill(white, rect=[item[0],item[1],5,5]) #Dots are size 5x5
+    for item in history_list:
+        gameDisplay.fill(green, rect=[item[0],item[1],5,5])
 
     pygame.display.update()
+    time.sleep(.5)
 
 pygame.quit()
 GPIO.cleanup()
