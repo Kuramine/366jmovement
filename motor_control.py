@@ -27,10 +27,17 @@ car_angle = 90
 travel_distance = 20
 turn_angle = 15
 
-sensor_list = [] #holds all point Objects of type list[x,y]
+sleeptime=1
+
+sensor_list = [] # holds all point Objects of type list[x,y]
+sensor_list2 = [] # left sensor
+sensor_list3 = [] # right sensor
+history_list = [] # holds all points of past position of car
 
 gameDisplay = pygame.display.set_mode((screen_height,screen_width))
 car_surface = pygame.image.load('car_body.jpg')
+start_surface = pygame.image.load('start.jpg')
+arrow_surface = pygame.image.load('arrowKeys.jpg')# assign as arrowkeys as default
 
 pygame.display.set_caption('Motor test')
 
@@ -54,6 +61,11 @@ GPIO.setup(Backward, GPIO.OUT)
 GPIO.setup(Forward2, GPIO.OUT)
 GPIO.setup(Backward2, GPIO.OUT)
 
+##### ULTRASONIC GPIO INITIALIZATION #####
+
+GPIO_TRIGGER = 23
+GPIO_ECHO = 24
+
 ##### CALCULATIONS OF POSITION #####
 
 def rot_center(image, angle):
@@ -65,28 +77,65 @@ def rot_center(image, angle):
     rot_image = rot_image.subsurface(rot_rect).copy()
     return rot_image
 
-car_surface = rot_center(car_surface, car_angle) #initial rotation on first load of car sprite
+car_surface = rot_center(car_surface, car_angle) # initial rotation on first load of car sprite
+history_list.append([car_position[0],car_position[1]]) # initial start_point for history
 
 def calculate_position(distance, direction): # calculate sensed object position relative to car, 2 scenarios with 4 quadrants each = 8 conditions
     if direction == "forward":
-        movement = calculate_xy_shift(travel_distance, car_angle) #returns how far all dots should move relative to car
+        movement = calculate_xy_shift(travel_distance, car_angle) # returns how far all dots should move relative to car
+        #print(movement)
+        #print(car_angle)
         for item in sensor_list:
             item[0]-=movement[0]
             item[1]+=movement[1]
+        
+        for item in history_list:
+            item[0]-=movement[0]
+            item[1]+=movement[1]
+
+        history_list.append([car_position[0],car_position[1]]) 
 
     if direction == "backward":
-        movement = calculate_xy_shift(travel_distance, car_angle) #returns how far all dots should move relative to car
+        movement = calculate_xy_shift(travel_distance, car_angle) # returns how far all dots should move relative to car
+        #print(movement)
+        #print(car_angle)
         for item in sensor_list:
             item[0]+=movement[0]
             item[1]-=movement[1]
 
-    new_point = calculate_xy_position(distance, car_angle) #position of a new point
-    sensor_list.append([car_position[0]+new_point[0],car_position[1]-new_point[1]])
+        for item in history_list:
+            item[0]+=movement[0]
+            item[1]-=movement[1]
+
+        history_list.append([car_position[0],car_position[1]])
+
+    new_point = calculate_xy_position(distance, car_angle) # position of a new point
+    sensor_list.append([car_position[0]+new_point[0],car_position[1]-new_point[1]]) # add new point
+    #history_list.append([car_position[0],car_position[1]]) # add history point
+    # moved to within forward/backward to prevent duplicate history points when turning
 
 def fake_sensor():
     travel_time = random.randint(300,350)
     return travel_time
     # decrease movement sleep times for more readings
+
+def distance():
+    GPIO.output(GPIO_TRIGGER, True)
+    time.sleep(0.00001)
+    GPIO.output(GPIO_TRIGGER, False)
+ 
+    StartTime = time.time()
+    StopTime = time.time()
+
+    while GPIO.input(GPIO_ECHO) == 0:
+        StartTime = time.time()
+
+    while GPIO.input(GPIO_ECHO) == 1:
+        StopTime = time.time()
+ 
+    TimeElapsed = StopTime - StartTime
+    distance = (TimeElapsed * 34300) / 2
+    return int(distance*2) #set arbitrary scale, convert to integer  
 
 def change_angle(turn_angle):
     global car_angle
@@ -159,9 +208,11 @@ while not gameExit:
     if pressed[pygame.K_d]:
        right(.5)
 
-    gameDisplay.blit(car_surface,[screen_width/2-car_width/2,screen_height/2-car_height/2,car_width,car_height])
-
+    gameDisplay.blit(start_surface,[history_list[0][0]-10,history_list[0][1]-10,20,20]) # displaying start point 
+    gameDisplay.blit(car_surface,[screen_width/2-car_width/2,screen_height/2-car_height/2,car_width,car_height]) # displaying car
+    gameDisplay.blit(arrow_surface,[0,0,288,187])
     # drawing the dots
+    
     for item in sensor_list:
         gameDisplay.fill(white, rect=[item[0],item[1],5,5]) # dots are size 5x5
 
