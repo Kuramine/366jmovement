@@ -1,54 +1,42 @@
-#Libraries
-import RPi.GPIO as GPIO
-import time
- 
-#GPIO Mode (BOARD / BCM)
-GPIO.setmode(GPIO.BCM)
- 
-#set GPIO Pins
-GPIO_TRIGGER = 23
-GPIO_ECHO = 24
- 
-#set GPIO direction (IN / OUT)
-GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
-GPIO.setup(GPIO_ECHO, GPIO.IN)
- 
-def distance():
-    # set Trigger to HIGH
-    GPIO.output(GPIO_TRIGGER, True)
- 
-    # set Trigger after 0.01ms to LOW
-    time.sleep(0.00001)
-    GPIO.output(GPIO_TRIGGER, False)
- 
-    StartTime = time.time()
-    StopTime = time.time()
- 
-    # save StartTime
-    while GPIO.input(GPIO_ECHO) == 0:
-        StartTime = time.time()
- 
-    # save time of arrival
-    while GPIO.input(GPIO_ECHO) == 1:
-        #clause that stops it if it's been waiting too long
-        StopTime = time.time()
- 
-    # time difference between start and arrival
-    TimeElapsed = StopTime - StartTime
-    # multiply with the sonic speed (34300 cm/s)
-    # and divide by 2, because there and back
-    distance = (TimeElapsed * 34300) / 2
- 
-    return distance
- 
-if __name__ == '__main__':
-    try:
-        while True:
-            dist = distance()
-            print ("Measured Distance = %.1f cm" % dist)
-            time.sleep(1)
- 
-        # Reset by pressing CTRL + C
-    except KeyboardInterrupt:
-        print("Measurement stopped by User")
-        GPIO.cleanup()
+def get_distance():
+
+    if GPIO.input (GPIO_ECHO):                                          # If the 'Echo' pin is already high
+        return (1000)                                                   # then exit with 1000 (sensor fault)
+
+    distance = 0                                                        # Set initial distance to zero
+
+    GPIO.output (GPIO_TRIGGER,False)                                    # Ensure the 'Trig' pin is low for at
+    time.sleep (0.05)                                                   # least 50mS (recommended re-sample time)
+
+    GPIO.output (GPIO_TRIGGER,True)                                     # Turn on the 'Trig' pin for 10uS (ish!)
+    dummy_variable = 0                                                  # No need to use the 'time' module here,
+    dummy_variable = 0                                                  # a couple of 'dummy' statements will do fine
+    
+    GPIO.output (GPIO_TRIGGER,False)                                    # Turn off the 'Trig' pin
+    time1, time2 = time.time(), time.time()                             # Set inital time values to current time
+    
+    while not GPIO.input (GPIO_ECHO):                                   # Wait for the start of the 'Echo' pulse
+        time1 = time.time()                                             # Get the time the 'Echo' pin goes high
+        if time1 - time2 > 0.02:                                        # If the 'Echo' pin doesn't go high after 20mS
+            distance = 1000                                             # then set 'distance' to 1000
+            break                                                       # and break out of the loop
+        
+    if distance == 1000:                                                # If a sensor error has occurred
+        return (distance)                                               # then exit with 1000 (sensor fault)
+    
+    while GPIO.input (GPIO_ECHO):                                       # Otherwise, wait for the 'Echo' pin to go low
+        time2 = time.time()                                             # Get the time the 'Echo' pin goes low
+        if time2 - time1 > 0.02:                                        # If the 'Echo' pin doesn't go low after 20mS
+            distance = 1000                                             # then ignore it and set 'distance' to 1000
+            break                                                       # and break out of the loop
+        
+    if distance == 1000:                                                # If a sensor error has occurred
+        return (distance)                                               # then exit with 100 (sensor fault)
+        
+                                                                        # Sound travels at approximately 2.95uS per mm
+                                                                        # and the reflected sound has travelled twice
+                                                                        # the distance we need to measure (sound out,
+                                                                        # bounced off object, sound returned)
+                                                                        
+    distance = (time2 - time1) / 0.00000295 / 2 / 10                    # Convert the timer values into centimetres
+    return (distance)                                                   # Exit with the distance in centimetres

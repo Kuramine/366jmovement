@@ -65,10 +65,18 @@ GPIO.setup(Backward2, GPIO.OUT)
 
 GPIO_TRIGGER = 23
 GPIO_ECHO = 24
+GPIO_TRIGGER2 = 14
+GPIO_ECHO2 = 15
+GPIO_TRIGGER3 = 17
+GPIO_ECHO3 = 27
 
 #set GPIO direction (IN / OUT)
 GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
 GPIO.setup(GPIO_ECHO, GPIO.IN)
+GPIO.setup(GPIO_TRIGGER2, GPIO.OUT)
+GPIO.setup(GPIO_ECHO2, GPIO.IN)
+GPIO.setup(GPIO_TRIGGER3, GPIO.OUT)
+GPIO.setup(GPIO_ECHO3, GPIO.IN)
 
 ##### CALCULATIONS OF POSITION #####
 
@@ -84,7 +92,7 @@ def rot_center(image, angle):
 car_surface = rot_center(car_surface, car_angle) # initial rotation on first load of car sprite
 history_list.append([car_position[0],car_position[1]]) # initial start_point for history
 
-def calculate_position(distance, direction): # calculate sensed object position relative to car, 2 scenarios with 4 quadrants each = 8 conditions
+def calculate_position(distance, distance2, distance3, direction): # calculate sensed object position relative to car, 2 scenarios with 4 quadrants each = 8 conditions
     if direction == "forward":
         movement = calculate_xy_shift(travel_distance, car_angle) # returns how far all dots should move relative to car
         #print(movement)
@@ -113,8 +121,15 @@ def calculate_position(distance, direction): # calculate sensed object position 
 
         history_list.append([car_position[0],car_position[1]])
 
-    new_point = calculate_xy_position(distance, car_angle) # position of a new point
-    sensor_list.append([car_position[0]+new_point[0],car_position[1]-new_point[1]]) # add new point
+    if distance!=1000: # 1000 means error
+        new_point = calculate_xy_position(distance, car_angle) # position of a new point
+        sensor_list.append([car_position[0]+new_point[0],car_position[1]-new_point[1]]) # add new point
+    if distance2!=1000:
+        new_point = calculate_xy_position(distance2, car_angle-90) # position of a new left point
+        sensor_list.append([car_position[0]+new_point[0],car_position[1]-new_point[1]])
+    if distance3!=1000:
+        new_point = calculate_xy_position(distance3, car_angle+90) # position of a new right point
+        sensor_list.append([car_position[0]+new_point[0],car_position[1]-new_point[1]]) 
     #history_list.append([car_position[0],car_position[1]]) # add history point
     # moved to within forward/backward to prevent duplicate history points when turning
 
@@ -124,22 +139,88 @@ def fake_sensor():
     # decrease movement sleep times for more readings
 
 def distance():
-    GPIO.output(GPIO_TRIGGER, True)
-    time.sleep(0.00001)
-    GPIO.output(GPIO_TRIGGER, False)
- 
-    StartTime = time.time()
-    StopTime = time.time()
+    if GPIO.input (GPIO_ECHO):                                          # If the 'Echo' pin is already high
+        return (1000)                                                   # then exit with 1000 (sensor fault)
+    distance = 0                                                        # Set initial distance to zero
+    GPIO.output (GPIO_TRIGGER,False)                                    # Ensure the 'Trig' pin is low for at
+    time.sleep (0.05)                                                   # least 50mS (recommended re-sample time)
+    GPIO.output (GPIO_TRIGGER,True)                                     # Turn on the 'Trig' pin for 10uS (ish!)
+    dummy_variable = 0                                                  # No need to use the 'time' module here,
+    dummy_variable = 0                                                  # a couple of 'dummy' statements will do fine
+    GPIO.output (GPIO_TRIGGER,False)                                    # Turn off the 'Trig' pin
+    time1, time2 = time.time(), time.time()                             # Set inital time values to current time
+    while not GPIO.input (GPIO_ECHO):                                   # Wait for the start of the 'Echo' pulse
+        time1 = time.time()                                             # Get the time the 'Echo' pin goes high
+        if time1 - time2 > 0.02:                                        # If the 'Echo' pin doesn't go high after 20mS
+            distance = 1000                                             # then set 'distance' to 1000
+            break                                                       # and break out of the loop   
+    if distance == 1000:                                                # If a sensor error has occurred
+        return (distance)                                               # then exit with 1000 (sensor fault)
+    while GPIO.input (GPIO_ECHO):                                       # Otherwise, wait for the 'Echo' pin to go low
+        time2 = time.time()                                             # Get the time the 'Echo' pin goes low
+        if time2 - time1 > 0.02:                                        # If the 'Echo' pin doesn't go low after 20mS
+            distance = 1000                                             # then ignore it and set 'distance' to 1000
+            break                                                       # and break out of the loop    
+    if distance == 1000:                                                # If a sensor error has occurred
+        return (distance)                                               # then exit with 100 (sensor fault)
+    distance = (time2 - time1) / 0.00000295 / 2 / 10                    # Convert the timer values into centimetres
+    return (distance)                                                   # Exit with the distance in centimetres
 
-    while GPIO.input(GPIO_ECHO) == 0:
-        StartTime = time.time()
+def distance2():
+    if GPIO.input (GPIO_ECHO2):                                          # If the 'Echo' pin is already high
+        return (1000)                                                   # then exit with 1000 (sensor fault)
+    distance = 0                                                        # Set initial distance to zero
+    GPIO.output (GPIO_TRIGGER2,False)                                    # Ensure the 'Trig' pin is low for at
+    time.sleep (0.05)                                                   # least 50mS (recommended re-sample time)
+    GPIO.output (GPIO_TRIGGER2,True)                                     # Turn on the 'Trig' pin for 10uS (ish!)
+    dummy_variable = 0                                                  # No need to use the 'time' module here,
+    dummy_variable = 0                                                  # a couple of 'dummy' statements will do fine
+    GPIO.output (GPIO_TRIGGER2,False)                                    # Turn off the 'Trig' pin
+    time1, time2 = time.time(), time.time()                             # Set inital time values to current time
+    while not GPIO.input (GPIO_ECHO2):                                   # Wait for the start of the 'Echo' pulse
+        time1 = time.time()                                             # Get the time the 'Echo' pin goes high
+        if time1 - time2 > 0.02:                                        # If the 'Echo' pin doesn't go high after 20mS
+            distance = 1000                                             # then set 'distance' to 1000
+            break                                                       # and break out of the loop   
+    if distance == 1000:                                                # If a sensor error has occurred
+        return (distance)                                               # then exit with 1000 (sensor fault)
+    while GPIO.input (GPIO_ECHO2):                                       # Otherwise, wait for the 'Echo' pin to go low
+        time2 = time.time()                                             # Get the time the 'Echo' pin goes low
+        if time2 - time1 > 0.02:                                        # If the 'Echo' pin doesn't go low after 20mS
+            distance = 1000                                             # then ignore it and set 'distance' to 1000
+            break                                                       # and break out of the loop    
+    if distance == 1000:                                                # If a sensor error has occurred
+        return (distance)                                               # then exit with 100 (sensor fault)
+    distance = (time2 - time1) / 0.00000295 / 2 / 10                    # Convert the timer values into centimetres
+    return (distance)                                                   # Exit with the distance in centimetres
 
-    while GPIO.input(GPIO_ECHO) == 1:
-        StopTime = time.time()
- 
-    TimeElapsed = StopTime - StartTime
-    distance = (TimeElapsed * 34300) / 2
-    return int(distance*2) #set arbitrary scale, convert to integer  
+def distance3():
+    if GPIO.input (GPIO_ECHO3):                                          # If the 'Echo' pin is already high
+        return (1000)                                                   # then exit with 1000 (sensor fault)
+    distance = 0                                                        # Set initial distance to zero
+    GPIO.output (GPIO_TRIGGER3,False)                                    # Ensure the 'Trig' pin is low for at
+    time.sleep (0.05)                                                   # least 50mS (recommended re-sample time)
+    GPIO.output (GPIO_TRIGGER3,True)                                     # Turn on the 'Trig' pin for 10uS (ish!)
+    dummy_variable = 0                                                  # No need to use the 'time' module here,
+    dummy_variable = 0                                                  # a couple of 'dummy' statements will do fine
+    GPIO.output (GPIO_TRIGGER3,False)                                    # Turn off the 'Trig' pin
+    time1, time2 = time.time(), time.time()                             # Set inital time values to current time
+    while not GPIO.input (GPIO_ECHO3):                                   # Wait for the start of the 'Echo' pulse
+        time1 = time.time()                                             # Get the time the 'Echo' pin goes high
+        if time1 - time2 > 0.02:                                        # If the 'Echo' pin doesn't go high after 20mS
+            distance = 1000                                             # then set 'distance' to 1000
+            break                                                       # and break out of the loop   
+    if distance == 1000:                                                # If a sensor error has occurred
+        return (distance)                                               # then exit with 1000 (sensor fault)
+    while GPIO.input (GPIO_ECHO3):                                       # Otherwise, wait for the 'Echo' pin to go low
+        time2 = time.time()                                             # Get the time the 'Echo' pin goes low
+        if time2 - time1 > 0.02:                                        # If the 'Echo' pin doesn't go low after 20mS
+            distance = 1000                                             # then ignore it and set 'distance' to 1000
+            break                                                       # and break out of the loop    
+    if distance == 1000:                                                # If a sensor error has occurred
+        return (distance)                                               # then exit with 100 (sensor fault)
+    distance = (time2 - time1) / 0.00000295 / 2 / 10                    # Convert the timer values into centimetres
+    return (distance)                                                   # Exit with the distance in centimetres
 
 def change_angle(turn_angle):
     global car_angle
@@ -158,7 +239,7 @@ def forward(x):
     time.sleep(x) # wait x amount of time
     GPIO.output(Forward, GPIO.LOW) # motor 1 forward deactivate
     GPIO.output(Forward2, GPIO.LOW) # motor 2 forward deactivate
-    calculate_position(distance(),'forward')
+    calculate_position(distance(),distance2(),distance3(),'forward')
 
 def reverse(x):
     GPIO.output(Backward, GPIO.HIGH)
@@ -167,7 +248,7 @@ def reverse(x):
     time.sleep(x)
     GPIO.output(Backward, GPIO.LOW)
     GPIO.output(Backward2, GPIO.LOW)
-    calculate_position(distance(),'backward')
+    calculate_position(distance(),distance2(),distance3(),'backward')
 
 def left(x):
     GPIO.output(Backward, GPIO.HIGH) # left motor backward
@@ -180,7 +261,7 @@ def left(x):
     global car_surface
     car_surface = rot_center(pygame.image.load('car_body.jpg'), car_angle) 
     # redefining a new surface every time as a new image removes artifacting when rotating
-    calculate_position(distance(),'left')
+    calculate_position(distance(),distance2(),distance3(),'left')
 
 def right(x):
     GPIO.output(Forward, GPIO.HIGH)
@@ -192,7 +273,7 @@ def right(x):
     change_angle(-turn_angle)
     global car_surface
     car_surface = rot_center(pygame.image.load('car_body.jpg'), car_angle)
-    calculate_position(distance(),'right')
+    calculate_position(distance(),,distance2(),distance3(),'right')
 
 while not gameExit:
     for event in pygame.event.get():
@@ -223,7 +304,7 @@ while not gameExit:
         gameDisplay.fill(green, rect=[item[0],item[1],5,5])
 
     pygame.display.update()
-    time.sleep(.5)
+    #time.sleep(.5)
 
 pygame.quit()
 GPIO.cleanup()

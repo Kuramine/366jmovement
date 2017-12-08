@@ -87,7 +87,11 @@ def calculate_position(distance, direction): # calculate sensed object position 
         history_list.append([car_position[0],car_position[1]])
 
     new_point = calculate_xy_position(distance, car_angle) # position of a new point
+    new_point2 = calculate_xy_position(distance, car_angle+90) # position of new right point
+    new_point3 = calculate_xy_position(distance, car_angle-90) # position of new right point
     sensor_list.append([car_position[0]+new_point[0],car_position[1]-new_point[1]]) # add new point
+    sensor_list.append([car_position[0]+new_point2[0],car_position[1]-new_point2[1]]) # add new point
+    sensor_list.append([car_position[0]+new_point3[0],car_position[1]-new_point3[1]]) # add new point
     #history_list.append([car_position[0],car_position[1]]) # add history point
     # moved to within forward/backward to prevent duplicate history points when turning
 
@@ -95,24 +99,6 @@ def fake_sensor():
     travel_time = random.randint(300,350)
     return travel_time
     #decrease movement sleep times for more readings
-
-def distance():
-    GPIO.output(GPIO_TRIGGER, True)
-    time.sleep(0.00001)
-    GPIO.output(GPIO_TRIGGER, False)
- 
-    StartTime = time.time()
-    StopTime = time.time()
-
-    while GPIO.input(GPIO_ECHO) == 0:
-        StartTime = time.time()
-
-    while GPIO.input(GPIO_ECHO) == 1:
-        StopTime = time.time()
- 
-    TimeElapsed = StopTime - StartTime
-    distance = (TimeElapsed * 34300) / 2
-    return int(distance*2) #set arbitrary scale, convert to integer  
 
 def change_angle(turn_angle):
     global car_angle
@@ -127,12 +113,12 @@ def change_angle(turn_angle):
 def forward(x):
     print("forward")
     time.sleep(x)
-    calculate_position(distance(),'forward')
+    calculate_position(fake_sensor(),'forward')
 
 def reverse(x):
     print("reverse")
     time.sleep(x)
-    calculate_position(distance(),'backward')
+    calculate_position(fake_sensor(),'backward')
 
 def left(x):
     print("left")
@@ -141,7 +127,7 @@ def left(x):
     car_surface = rot_center(pygame.image.load('car_body.jpg'), car_angle) 
     #redefining a new surface every time as a new image removes artifacting when rotating
     time.sleep(x)
-    calculate_position(distance(),'left')
+    calculate_position(fake_sensor(),'left')
 
 def right(x):
     print("right")
@@ -149,7 +135,7 @@ def right(x):
     global car_surface
     car_surface = rot_center(pygame.image.load('car_body.jpg'), car_angle)
     time.sleep(x)
-    calculate_position(distance(),'right')
+    calculate_position(fake_sensor(),'right')
 
 while not gameExit:
 
@@ -179,7 +165,7 @@ while not gameExit:
     gameDisplay.blit(car_surface,[screen_width/2-car_width/2,screen_height/2-car_height/2,car_width,car_height]) # displaying car
     gameDisplay.blit(arrow_surface,[0,0,288,187])
     #drawing the dots
-    
+
     for item in sensor_list:
         gameDisplay.fill(white, rect=[item[0],item[1],5,5]) #Dots are size 5x5
     for item in history_list:
