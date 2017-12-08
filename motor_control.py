@@ -25,7 +25,7 @@ car_position = [500,500]
 # orientation of car
 car_angle = 90
 travel_distance = 20
-turn_angle = 15
+turn_angle = 5.3
 
 sleeptime=1
 
