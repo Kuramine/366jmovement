@@ -18,13 +18,13 @@ green = (0,255,0)
 # screen size, car size
 screen_height = 1000
 screen_width = 1000
-car_width = 96 #pixel size of sprite
-car_height = 96
+car_width = 48 #pixel size of sprite
+car_height = 48
 car_position = [500,500]
 
 # orientation of car
 car_angle = 90
-travel_distance = 20
+travel_distance = 10 # the ratio of cm to pixels is ~1cm/p
 turn_angle = 5.3
 
 sleeptime=1
@@ -33,11 +33,13 @@ sensor_list = [] # holds all point Objects of type list[x,y]
 sensor_list2 = [] # left sensor
 sensor_list3 = [] # right sensor
 history_list = [] # holds all points of past position of car
+sensor_data = [0,0,0] #holds 3 readings
 
 gameDisplay = pygame.display.set_mode((screen_height,screen_width))
 car_surface = pygame.image.load('car_body.jpg')
 start_surface = pygame.image.load('start.jpg')
-arrow_surface = pygame.image.load('arrowKeys.jpg')# assign as arrowkeys as default
+myfont = pygame.font.SysFont('Comic Sans MS', 30)
+#arrow_surface = pygame.image.load('arrowKeys.jpg')# assign as arrowkeys as default
 
 pygame.display.set_caption('Motor test')
 
@@ -93,6 +95,7 @@ car_surface = rot_center(car_surface, car_angle) # initial rotation on first loa
 history_list.append([car_position[0],car_position[1]]) # initial start_point for history
 
 def calculate_position(distance, distance2, distance3, direction): # calculate sensed object position relative to car, 2 scenarios with 4 quadrants each = 8 conditions
+    global sensor_data
     if direction == "forward":
         movement = calculate_xy_shift(travel_distance, car_angle) # returns how far all dots should move relative to car
         #print(movement)
@@ -130,6 +133,8 @@ def calculate_position(distance, distance2, distance3, direction): # calculate s
     if distance3!=1000:
         new_point = calculate_xy_position(distance3, car_angle+90) # position of a new right point
         sensor_list.append([car_position[0]+new_point[0],car_position[1]-new_point[1]]) 
+
+    sensor_data = [distance,distance2,distance3]
     #history_list.append([car_position[0],car_position[1]]) # add history point
     # moved to within forward/backward to prevent duplicate history points when turning
 
@@ -273,7 +278,7 @@ def right(x):
     change_angle(-turn_angle)
     global car_surface
     car_surface = rot_center(pygame.image.load('car_body.jpg'), car_angle)
-    calculate_position(distance(),,distance2(),distance3(),'right')
+    calculate_position(distance(),distance2(),distance3(),'right')
 
 while not gameExit:
     for event in pygame.event.get():
@@ -295,13 +300,20 @@ while not gameExit:
 
     gameDisplay.blit(start_surface,[history_list[0][0]-10,history_list[0][1]-10,20,20]) # displaying start point 
     gameDisplay.blit(car_surface,[screen_width/2-car_width/2,screen_height/2-car_height/2,car_width,car_height]) # displaying car
-    gameDisplay.blit(arrow_surface,[0,0,288,187])
+    #gameDisplay.blit(arrow_surface,[0,0,288,187])
     # drawing the dots
     
     for item in sensor_list:
         gameDisplay.fill(white, rect=[item[0],item[1],5,5]) #Dots are size 5x5
     for item in history_list:
         gameDisplay.fill(green, rect=[item[0],item[1],5,5])
+
+    textsurface = myfont.render(str(sensor_data[1]), True, (0, 255, 255)) # left reading
+    gameDisplay.blit(textsurface,(0,0))
+    textsurface = myfont.render(str(sensor_data[0]), True, (0, 255, 255)) # center reading
+    gameDisplay.blit(textsurface,(70,0))
+    textsurface = myfont.render(str(sensor_data[2]), True, (0, 255, 255)) # right reading
+    gameDisplay.blit(textsurface,(140,0))
 
     pygame.display.update()
     #time.sleep(.5)
