@@ -18,14 +18,14 @@ green = (0,255,0)
 # screen size, car size
 screen_height = 1000
 screen_width = 1000
-car_width = 48 #pixel size of sprite
-car_height = 48
+car_width = 40 #pixel size of sprite
+car_height = 40
 car_position = [500,500]
 
 # orientation of car
 car_angle = 90
-travel_distance = 10 # the ratio of cm to pixels is ~1cm/p
-turn_angle = 5.3
+travel_distance = 20 # the ratio of cm to pixels is ~1cm/p
+turn_angle = 36
 
 sleeptime=1
 
@@ -40,6 +40,7 @@ car_surface = pygame.image.load('car_body.jpg')
 start_surface = pygame.image.load('start.jpg')
 myfont = pygame.font.SysFont('Comic Sans MS', 30)
 #arrow_surface = pygame.image.load('arrowKeys.jpg')# assign as arrowkeys as default
+scale_surface = pygame.image.load('scale.jpg')
 
 pygame.display.set_caption('Motor test')
 
@@ -127,14 +128,16 @@ def calculate_position(distance, distance2, distance3, direction): # calculate s
     if distance!=1000: # 1000 means error
         new_point = calculate_xy_position(distance, car_angle) # position of a new point
         sensor_list.append([car_position[0]+new_point[0],car_position[1]-new_point[1]]) # add new point
+    '''
     if distance2!=1000:
         new_point = calculate_xy_position(distance2, car_angle-90) # position of a new left point
         sensor_list.append([car_position[0]+new_point[0],car_position[1]-new_point[1]])
     if distance3!=1000:
         new_point = calculate_xy_position(distance3, car_angle+90) # position of a new right point
         sensor_list.append([car_position[0]+new_point[0],car_position[1]-new_point[1]]) 
+    '''
 
-    sensor_data = [distance,distance2,distance3]
+    sensor_data = [int(distance),int(distance2),int(distance3)]
     #history_list.append([car_position[0],car_position[1]]) # add history point
     # moved to within forward/backward to prevent duplicate history points when turning
 
@@ -292,11 +295,11 @@ while not gameExit:
     if pressed[pygame.K_w]:
        forward(.5)
     if pressed[pygame.K_a]:
-       left(.1)
+       left(.5)
     if pressed[pygame.K_s]:
        reverse(.5)
     if pressed[pygame.K_d]:
-       right(.1)
+       right(.5)
 
     gameDisplay.blit(start_surface,[history_list[0][0]-10,history_list[0][1]-10,20,20]) # displaying start point 
     gameDisplay.blit(car_surface,[screen_width/2-car_width/2,screen_height/2-car_height/2,car_width,car_height]) # displaying car
@@ -314,6 +317,8 @@ while not gameExit:
     gameDisplay.blit(textsurface,(70,0))
     textsurface = myfont.render(str(sensor_data[2]), True, (0, 255, 255)) # right reading
     gameDisplay.blit(textsurface,(140,0))
+
+    gameDisplay.blit(scale_surface,[880,0])
 
     pygame.display.update()
     #time.sleep(.5)
