@@ -37,7 +37,7 @@ sensor_data = [0,0,0] #holds 3 readings
 gameDisplay = pygame.display.set_mode((screen_height,screen_width))
 car_surface = pygame.image.load('car_body.jpg')
 start_surface = pygame.image.load('start.jpg')
-#arrow_surface = pygame.image.load('arrowKeys.jpg')# assign as arrowkeys as default
+arrow_surface = pygame.image.load('WASD_Keys.jpg')# assign as arrowkeys as default
 myfont = pygame.font.SysFont('Comic Sans MS', 30)
 scale_surface = pygame.image.load('scale.jpg')
 
@@ -169,7 +169,7 @@ while not gameExit:
 
     gameDisplay.blit(start_surface,[history_list[0][0]-10,history_list[0][1]-10,20,20]) # displaying start point 
     gameDisplay.blit(car_surface,[screen_width/2-car_width/2,screen_height/2-car_height/2,car_width,car_height]) # displaying car
-    #gameDisplay.blit(arrow_surface,[0,0,288,187])
+    gameDisplay.blit(arrow_surface,[0,800,0,0])
     #drawing the dots
 
     for item in sensor_list:
